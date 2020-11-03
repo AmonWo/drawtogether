@@ -85,12 +85,13 @@ export default {
     })
 
     this.canvas.addEventListener('mouseup', (e) => {
-      this.find_mouse_pos('down', e)
+      this.find_mouse_pos('up', e)
     })
 
     this.canvas.addEventListener('mouseout', (e) => {
       this.find_mouse_pos('out', e)
     })
+
   }
 }
 </script>

@@ -5,6 +5,7 @@
         prominent
         max-height="11%"
         src="https://cdn.vuetifyjs.com/images/backgrounds/vbanner.jpg"
+        style="filter: grayscale(0.9)"
     >
       <v-app-bar-nav-icon></v-app-bar-nav-icon>
 
