@@ -19,13 +19,12 @@
             <v-spacer></v-spacer>
 
             <v-responsive max-width="156">
-                <v-text-field
-                        dense
-                        flat
-                        hide-details
+                <v-btn
+                        color="green"
+                        block
                         rounded
-                        solo-inverted
-                ></v-text-field>
+                        @click="save_drawplace"
+                >Save</v-btn>
             </v-responsive>
         </v-app-bar>
 
@@ -45,7 +44,7 @@
                         color="grey darken-1"
                         size="36"
                 >
-                  <ColorPicker :size="36"></ColorPicker>
+                    <ColorPicker :size="36"></ColorPicker>
                 </v-avatar>
 
                 <v-divider class="mx-3 my-5"></v-divider>
@@ -53,32 +52,32 @@
                 <v-avatar
                         v-for="color of this.colors"
                         :key="color"
-                        class="d-block text-center mx-auto mb-9"
+                        class="d-block text-center mx-auto mb-9 basic-color-picker"
                         :color="color"
                         size="28"
                 ></v-avatar>
             </v-navigation-drawer>
 
-<!--            <v-sheet
-                    color="grey darken-3"
-                    height="128"
-                    width="100%"
-            ></v-sheet>-->
+            <!--            <v-sheet
+                                color="grey darken-3"
+                                height="128"
+                                width="100%"
+                        ></v-sheet>-->
 
-          <!--  <v-list
-                    class="pl-14"
-                    shaped
-            >
-                <v-list-item
-                        v-for="n in 5"
-                        :key="n"
-                        link
-                >
-                    <v-list-item-content>
-                        <v-list-item-title>Item {{ n }}</v-list-item-title>
-                    </v-list-item-content>
-                </v-list-item>
-            </v-list>-->
+            <!--  <v-list
+                      class="pl-14"
+                      shaped
+              >
+                  <v-list-item
+                          v-for="n in 5"
+                          :key="n"
+                          link
+                  >
+                      <v-list-item-content>
+                          <v-list-item-title>Item {{ n }}</v-list-item-title>
+                      </v-list-item-content>
+                  </v-list-item>
+              </v-list>-->
         </v-navigation-drawer>
 
         <v-navigation-drawer
@@ -88,30 +87,42 @@
         >
             <v-list>
                 <v-list-item
-                        v-for="n in 5"
-                        :key="n"
+                        v-for="drawplace of this.draw_place_stack"
+                        :key="drawplace.title"
                         link
+                        class="drawplace"
+                        @click="load_drawplace(drawplace)"
                 >
                     <v-list-item-content>
-                        <v-list-item-title>Item {{ n }}</v-list-item-title>
+                        <v-list-item-title>{{ drawplace.title }}</v-list-item-title>
                     </v-list-item-content>
                 </v-list-item>
             </v-list>
         </v-navigation-drawer>
 
         <v-main>
-            <router-view></router-view>
+            <router-view :brushColor="brushColor" :alpha="alpha" :brushSize="brushSize"></router-view>
         </v-main>
 
         <v-footer
                 app
                 color="transparent"
-                height="80"
+                height="100"
                 inset
         >
             <v-slider
                     label="Opacity"
-                    v-model="opacity"
+                    v-model="alpha"
+                    min="0"
+                    max="100"
+                    step="1"
+                    ticks
+                    class="config-slider my-0 py-0"
+                    thumb-label
+            ></v-slider>
+            <v-slider
+                    label="Brushsize"
+                    v-model="brushSize"
                     min="0"
                     max="100"
                     step="1"
@@ -125,27 +136,61 @@
 
 <script>
     import ColorPicker from "../components/features/ColorPicker";
+    import {EventBus} from '../plugins/eventbus'
     export default {
-      components: {ColorPicker},
-      data () {
-        return {
-          opacity: 100,
-          drawer: null,
-          colors: ['red', 'green', 'blue', 'cyan', '#FF00FF', 'yellow', 'black', 'white']
+        components: {ColorPicker},
+        data() {
+            return {
+                drawer: null,
+                colors: ['red', 'green', 'blue', 'cyan', '#FF00FF', 'yellow', 'black', 'white'],
+                brushColor: 'white',
+                alpha: 100,
+                brushSize: 5,
+                drawplace: null,
+                draw_place_stack: null
+            }
+        },
+        methods: {
+            save_drawplace() {
+                EventBus.$emit('show_dialog')
+            },
+            load_drawplace(drawplace) {
+                EventBus.$emit('load_drawplace', drawplace)
+            }
+        },
+        mounted() {
+            let colorPickers = document.getElementsByClassName('basic-color-picker')
+            for(let i = 0; i < colorPickers.length; i++) {
+                colorPickers[i].addEventListener('click', () => {
+                    this.brushColor = this.colors[i]
+                })
+            }
+            let saved_drawplaces = document.getElementsByClassName('drawplace')
+            for(let i = 0; i < saved_drawplaces.length; i++) {
+                saved_drawplaces[i].addEventListener('click', () => {
+                    EventBus.$emit('load_drawplace', this.$store.state.draw_place_stack[i].canvas)
+                })
+            }
+            EventBus.$on('update_drawplace', (drawplace) => {
+                this.drawplace = drawplace
+            })
+            this.draw_place_stack = this.$store.state.draw_place_stack
         }
-      },
-      methods: {
-        get_opacity(){return this.opacity.toString()}
-      }
     }
 </script>
 
-<style scoped>
-  >>>.v-slider__thumb {
-    height: 20px;
-    width: 20px;
-  }
-  >>>.v-slider--horizontal .v-slider__track-container {
-    height: 10px;
-  }
+<style scoped lang="scss">
+    .v-footer {
+        .config-slider {
+            width: 100%;
+        }
+    }
+    >>> .v-slider__thumb {
+        height: 20px;
+        width: 20px;
+    }
+
+    >>> .v-slider--horizontal .v-slider__track-container {
+        height: 10px;
+    }
 </style>

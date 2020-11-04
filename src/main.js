@@ -11,7 +11,7 @@ import "./plugins/chartist";
 import "./sass/overrides.sass";
 
 Vue.config.productionTip = false
-
+window.bus = new Vue({})
 new Vue({
   vuetify,
   i18n,

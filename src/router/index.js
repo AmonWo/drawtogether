@@ -23,7 +23,8 @@ const routes = [
         component: DrawPlace,
         meta: {
           title: 'DrawPlace'
-        }
+        },
+        props: true
       }
     ]
    /* children: [
