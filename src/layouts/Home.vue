@@ -40,6 +40,7 @@
                     mini-variant
             >
                 <v-avatar
+                        id="color-picker"
                         class="d-flex text-center mx-auto mt-4 justify-center"
                         color="grey darken-1"
                         size="36"
@@ -156,6 +157,9 @@
             },
             load_drawplace(drawplace) {
                 EventBus.$emit('load_drawplace', drawplace)
+            },
+            pick_color(event) {
+                EventBus.$emit('pick_color', {parent: document.getElementById('color-picker'), e: event})
             }
         },
         mounted() {
@@ -171,10 +175,22 @@
                     EventBus.$emit('load_drawplace', this.$store.state.draw_place_stack[i].canvas)
                 })
             }
+
             EventBus.$on('update_drawplace', (drawplace) => {
                 this.drawplace = drawplace
             })
+            EventBus.$on('new_color', (color) => {
+                let red = color[0]
+                let green = color[1]
+                let blue = color[2]
+                this.brushColor = 'rgb(' + red +', ' + green + ', ' + blue + ')'
+            })
+
             this.draw_place_stack = this.$store.state.draw_place_stack
+
+            document.getElementById('color-picker').addEventListener('click', (e) => {
+                this.pick_color(e)
+            })
         }
     }
 </script>

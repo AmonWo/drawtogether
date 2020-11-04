@@ -5,6 +5,7 @@
 </template>
 
 <script>
+    import {EventBus} from '../../plugins/eventbus'
     export default {
         name: 'ColorPicker',
         props: {
@@ -25,11 +26,19 @@
             }
         },
         methods: {
+            pick_color(parent, e) {
+                console.log(parent)
+                console.log(parent.offsetLeft, parent.offsetTop)
+                console.log(e.clientX - parent.offsetLeft, e.clientY - parent.offsetTop)
+                console.log(this.ctx.getImageData(e.clientX - parent.offsetLeft, e.clientY - 40, 1, 1).data)
+                let color = this.ctx.getImageData(e.clientX - parent.offsetLeft, e.clientY - 40, 1, 1).data
+                EventBus.$emit('new_color', color)
+            },
             degreesToRadians(degrees) {
                 return degrees * (Math.PI / 180);
             },
             drawColorWheel(canvas, size = this.size) {
-                const context = canvas.getContext('2d');
+                this.ctx = canvas.getContext('2d');
                 canvas.width = size;
                 canvas.height = size;
 
@@ -62,7 +71,7 @@
                     }
 
                     const rgb = `rgb(${this.hexCode.map(h => Math.floor(h)).join(',')})`;
-                    const grad = context.createRadialGradient(
+                    const grad = this.ctx.createRadialGradient(
                         this.radius,
                         this.radius,
                         0,
@@ -72,21 +81,21 @@
                     );
                     grad.addColorStop(0, centerColor);
                     grad.addColorStop(1, rgb);
-                    context.fillStyle = grad;
+                    this.ctx.fillStyle = grad;
 
                     // draw circle portion
-                    context.globalCompositeOperation = 'source-over';
-                    context.beginPath();
-                    context.moveTo(this.radius, this.radius);
-                    context.arc(
+                    this.ctx.globalCompositeOperation = 'source-over';
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.radius, this.radius);
+                    this.ctx.arc(
                         this.radius,
                         this.radius,
                         this.radius,
                         this.degreesToRadians(this.angle),
                         this.degreesToRadians(360)
                     );
-                    context.closePath();
-                    context.fill();
+                    this.ctx.closePath();
+                    this.ctx.fill();
                     this.angle++;
                 }
             },
@@ -95,8 +104,8 @@
         mounted() {
             this.canvas = document.getElementById('cp-canvas')
             this.drawColorWheel(this.canvas)
-            this.canvas.addEventListener('mousedown', () => {
-                console.log('mousedown')
+            EventBus.$on('pick_color', (payload) => {
+                this.pick_color(payload.parent, payload.e)
             })
         }
     }
