@@ -16,6 +16,8 @@
     "express": "^4.17.1",
     "lodash": "^4.17.20",
     "portal-vue": "^2.1.0",
+    "reconnecting-websocket": "^4.4.0",
+    "sharedb": "^1.5.2",
     "vue": "^2.6.11",
     "vue-chartist": "^2.3.0",
     "vue-i18n": "^8.17.3",
@@ -23,7 +25,9 @@
     "vuedraggable": "^2.23.0",
     "vuetify": "^2.2.11",
     "vuetify-admin": "^0.5.0",
-    "vuex": "^3.4.0"
+    "vuex": "^3.4.0",
+    "websocket-json-stream": "^0.0.3",
+    "ws": "^7.4.0"
   },
   "devDependencies": {
     "@intlify/vue-i18n-loader": "^1.0.0",

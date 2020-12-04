@@ -57,28 +57,19 @@
                         :color="color"
                         size="28"
                 ></v-avatar>
+
+                <v-divider class="mx-3 my-5"></v-divider>
+
+                <v-avatar
+                        v-for="(tool, index) of this.tools"
+                        :key="tool"
+                        class="d-block text-center mx-auto mb-9 tool-picker"
+                        size="28"
+                        @click="pick_tool(index)"
+                ><v-icon>mdi-{{ tool }}</v-icon></v-avatar>
+
             </v-navigation-drawer>
 
-            <!--            <v-sheet
-                                color="grey darken-3"
-                                height="128"
-                                width="100%"
-                        ></v-sheet>-->
-
-            <!--  <v-list
-                      class="pl-14"
-                      shaped
-              >
-                  <v-list-item
-                          v-for="n in 5"
-                          :key="n"
-                          link
-                  >
-                      <v-list-item-content>
-                          <v-list-item-title>Item {{ n }}</v-list-item-title>
-                      </v-list-item-content>
-                  </v-list-item>
-              </v-list>-->
         </v-navigation-drawer>
 
         <v-navigation-drawer
@@ -102,7 +93,7 @@
         </v-navigation-drawer>
 
         <v-main>
-            <router-view :brushColor="brushColor" :alpha="alpha" :brushSize="brushSize"></router-view>
+            <router-view :brushColor="brushColor" :alpha="alpha" :brushSize="brushSize" :tool="tool"></router-view>
         </v-main>
 
         <v-footer
@@ -137,13 +128,19 @@
 
 <script>
     import ColorPicker from "../components/features/ColorPicker";
-    import {EventBus} from '../plugins/eventbus'
+    import { EventBus } from '../plugins/eventbus'
+    // eslint-disable-next-line no-unused-vars
+    import ShareDB from "../plugins/sharedb_client";
     export default {
         components: {ColorPicker},
         data() {
             return {
+                client: null,
+                doc: null,
                 drawer: null,
+                tool: 'pencil',
                 colors: ['red', 'green', 'blue', 'cyan', '#FF00FF', 'yellow', 'black', 'white'],
+                tools: ['pencil', 'eraser'],
                 brushColor: 'white',
                 alpha: 100,
                 brushSize: 5,
@@ -160,31 +157,53 @@
             },
             pick_color(event) {
                 EventBus.$emit('pick_color', {parent: document.getElementById('color-picker'), e: event})
+            },
+            pick_tool(index) {
+                this.tool = this.tools[index]
+            },
+            update_canvas_locally() {
+                this.canvas = this.doc.data.canvas
+            },
+            update_canvas_db() {
+                this.doc.submitOp([{canvasData: 'Hallo'}])
+            },
+            start_client() {
+                this.client = new ShareDB();
+                this.doc = this.client.connection.get('drawings', 'clipmon');
+                this.doc.subscribe(this.update_canvas_db());
+                this.doc.on('op', this.update_canvas_db())
+            },
+            start_listening_eventbus() {
+                EventBus.$on('update_drawplace', (drawplace) => {
+                    this.drawplace = drawplace
+                });
+                EventBus.$on('new_color', (color) => {
+                    let red = color[0];
+                    let green = color[1];
+                    let blue = color[2];
+                    this.brushColor = 'rgb(' + red +', ' + green + ', ' + blue + ')'
+                });
+                EventBus.$on('update_canvas', () => {
+                   this.doc.submitOp()
+                })
             }
         },
         mounted() {
-            let colorPickers = document.getElementsByClassName('basic-color-picker')
+            this.start_client();
+            this.start_listening_eventbus();
+
+            let colorPickers = document.getElementsByClassName('basic-color-picker');
             for(let i = 0; i < colorPickers.length; i++) {
                 colorPickers[i].addEventListener('click', () => {
                     this.brushColor = this.colors[i]
                 })
             }
-            let saved_drawplaces = document.getElementsByClassName('drawplace')
+            let saved_drawplaces = document.getElementsByClassName('drawplace');
             for(let i = 0; i < saved_drawplaces.length; i++) {
                 saved_drawplaces[i].addEventListener('click', () => {
                     EventBus.$emit('load_drawplace', this.$store.state.draw_place_stack[i].canvas)
                 })
             }
-
-            EventBus.$on('update_drawplace', (drawplace) => {
-                this.drawplace = drawplace
-            })
-            EventBus.$on('new_color', (color) => {
-                let red = color[0]
-                let green = color[1]
-                let blue = color[2]
-                this.brushColor = 'rgb(' + red +', ' + green + ', ' + blue + ')'
-            })
 
             this.draw_place_stack = this.$store.state.draw_place_stack
 

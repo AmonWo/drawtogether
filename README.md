@@ -22,3 +22,8 @@ yarn lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+### MongoDB
+
+mongo -u admin -p --authenticationDatabase admin <- Opening Shell with user "admin"
+use admin <- Grant your shell instance admin rights

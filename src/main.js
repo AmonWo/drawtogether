@@ -10,12 +10,11 @@ import "./plugins/base";
 import "./plugins/chartist";
 import "./sass/overrides.sass";
 
-Vue.config.productionTip = false
-window.bus = new Vue({})
+Vue.config.productionTip = false;
 new Vue({
   vuetify,
   i18n,
   router,
   store,
   render: h => h(App)
-}).$mount('#app')
+}).$mount('#app');

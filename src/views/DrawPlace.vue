@@ -1,8 +1,7 @@
 <template>
-    <div id="draw-space" class="draw-space col-12 pb-10">
-        <canvas id="draw-canvas" style="border: 2px solid black"></canvas>
+    <div id="draw-space" class="draw-space col-12 pb-10" :tool="tool">
+        <canvas id="draw-canvas" style="border: 2px solid white"></canvas>
         <v-dialog v-model="dialog"
-                  persistent
                   max-width="290"
         >      <v-card>
             <v-card-title class="headline">
@@ -43,69 +42,7 @@
                 type: Number,
                 default: 5
             },
-        },
-        methods: {
-            save_drawplace() {
-                const data = this.canvas.toDataURL('image/png');
-                /*                const anchor = document.createElement('a');
-                                anchor.href = data;
-                                anchor.download = 'image.png';
-                                anchor.click();*/
-                this.$store.commit('save_drawplace', {
-                    title: this.title,
-                    canvas: data,
-                })
-                this.show_dialog()
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-            },
-            show_dialog() {
-              this.dialog = !this.dialog
-            },
-            draw() {
-                this.ctx.beginPath();
-                //this.ctx.moveTo(this.prevX, this.prevY)
-                //this.ctx.lineTo(this.currX, this.currY)
-                this.ctx.strokeStyle = this.brushColor
-                this.ctx.fillStyle = this.brushColor
-                this.ctx.globalAlpha = this.alpha / 100
-                // this.ctx.lineWidth = this.brushSize;
-                this.ctx.arc(this.currX, this.currY, this.brushSize, 0, 2 * Math.PI)
-                this.ctx.stroke()
-                this.ctx.fill()
-                this.ctx.closePath()
-            },
-            find_mouse_pos(res, e) {
-                if (res === 'down') {
-                    this.prevX = this.currX
-                    this.prevY = this.currY
-                    this.currX = (e.clientX - this.canvas.offsetLeft) - 50
-                    this.currY = (e.clientY - this.canvas.offsetTop) - 90
-
-                    this.flag = true
-                    this.dot_flag = true
-                    /*                    if (this.dot_flag) {
-                                            this.ctx.beginPath()
-                                            this.ctx.fillStyle = this.brushColor
-                                            this.ctx.globalAlpha = this.alpha / 100
-                                            this.ctx.fillRect(this.currX, this.currY, 2, 2)
-                                            this.ctx.closePath()
-                                            this.dot_flag = false
-                                        }*/
-                }
-                if (res === 'up' || res === 'out') {
-                    this.flag = false
-                    EventBus.$emit('update_drawplace', {canvas: this.canvas, ctx: this.ctx})
-                }
-                if (res === 'move') {
-                    if (this.flag) {
-                        this.prevX = this.currX
-                        this.prevY = this.currY
-                        this.currX = (e.clientX - this.canvas.offsetLeft) - 50
-                        this.currY = (e.clientY - this.canvas.offsetTop) - 90
-                        this.draw()
-                    }
-                }
-            }
+            tool: String,
         },
         data() {
             return {
@@ -120,44 +57,122 @@
                 drawingSpace: null,
                 dialog: false,
                 title: ""
-                // brushColor: 'white'
+            }
+        },
+        methods: {
+            create_canvas() {
+                this.canvas = document.getElementById('draw-canvas');
+                this.drawingSpace = document.getElementById('draw-space');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.height = this.drawingSpace.clientHeight - 30;
+                this.canvas.width = this.drawingSpace.clientWidth - 335;
+            },
+            save_drawplace() {
+                const data = this.canvas.toDataURL('image/png');
+                this.$store.commit('save_drawplace', {
+                    title: this.title,
+                    canvas: data,
+                });
+                this.show_dialog();
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+            },
+            show_dialog() {
+              this.dialog = !this.dialog
+            },
+            draw() {
+                this.ctx.beginPath();
+                if (this.tool === 'pencil') {
+                    this.ctx.globalCompositeOperation = 'source-over'
+                } else if (this.tool === 'eraser') {
+                    this.ctx.globalCompositeOperation = 'destination-out'
+                }
+                this.ctx.lineWidth = this.brushSize;
+                this.ctx.moveTo(this.prevX, this.prevY);
+                this.ctx.lineTo(this.currX, this.currY);
+                this.ctx.strokeStyle = this.brushColor;
+                this.ctx.fillStyle = this.brushColor;
+                this.ctx.globalAlpha = this.alpha / 100;
+                this.ctx.arc(this.currX, this.currY, this.brushSize, 0, 2 * Math.PI);
+                this.ctx.stroke();
+                this.ctx.fill();
+                this.ctx.closePath();
+
+            },
+            find_mouse_pos(res, e) {
+                if (res === 'down') {
+                    this.prevX = this.currX;
+                    this.prevY = this.currY;
+                    this.currX = (e.clientX - this.canvas.offsetLeft) - 50;
+                    this.currY = (e.clientY - this.canvas.offsetTop) - 90;
+
+                    this.flag = true;
+                    this.dot_flag = true;
+                        if (this.dot_flag) {
+                            this.ctx.beginPath();
+                            this.ctx.fillStyle = this.brushColor;
+                            this.ctx.globalAlpha = this.alpha / 100;
+                            this.ctx.fillRect(this.currX, this.currY, this.brushSize, this.brushSize);
+                            this.ctx.closePath();
+                            this.dot_flag = false
+                        }
+                }
+                if (res === 'up' || res === 'out') {
+                    this.flag = false;
+                    EventBus.$emit('update_drawplace', {canvas: this.canvas, ctx: this.ctx})
+                }
+                if (res === 'move') {
+                    if (this.flag) {
+                        this.prevX = this.currX;
+                        this.prevY = this.currY;
+                        this.currX = (e.clientX - this.canvas.offsetLeft) - 50;
+                        this.currY = (e.clientY - this.canvas.offsetTop) - 90;
+                        this.draw()
+                    }
+                }
+            },
+            update_canvas(){
+                console.log('EMIT UPDATE_CANVAS');
+                const data = this.canvas.toDataURL('image/png');
+                EventBus.$emit('update_canvas', data)
+            },
+            add_eventlistners() {
+                this.canvas.addEventListener("mousemove", (e) => {
+                    this.find_mouse_pos('move', e)
+                });
+
+                this.canvas.addEventListener('mousedown', (e) => {
+                    this.find_mouse_pos('down', e)
+                });
+
+                this.canvas.addEventListener('mouseup', (e) => {
+                    this.find_mouse_pos('up', e);
+                    this.update_canvas()
+                });
+
+                this.canvas.addEventListener('mouseout', (e) => {
+                    this.find_mouse_pos('out', e)
+                });
+            },
+            start_listening_eventbus(){
+                EventBus.$on('load_drawplace', (drawplace) => {
+                    "use strict";
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    var img = new window.Image();
+                    img.addEventListener("load", () => {
+                        this.canvas.getContext("2d").drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+                    });
+                    img.setAttribute("src", drawplace.canvas);
+                });
+
+                EventBus.$on('show_dialog', () => {
+                    this.show_dialog()
+                })
             }
         },
         mounted() {
-            this.canvas = document.getElementById('draw-canvas')
-            this.drawingSpace = document.getElementById('draw-space')
-            this.ctx = this.canvas.getContext('2d')
-            this.canvas.height = this.drawingSpace.clientHeight - 30
-            this.canvas.width = this.drawingSpace.clientWidth - 335
-
-            this.canvas.addEventListener("mousemove", (e) => {
-                this.find_mouse_pos('move', e)
-            })
-
-            this.canvas.addEventListener('mousedown', (e) => {
-                this.find_mouse_pos('down', e)
-            })
-
-            this.canvas.addEventListener('mouseup', (e) => {
-                this.find_mouse_pos('up', e)
-            })
-
-            this.canvas.addEventListener('mouseout', (e) => {
-                this.find_mouse_pos('out', e)
-            })
-            EventBus.$on('load_drawplace', (drawplace) => {
-                "use strict";
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-                var img = new window.Image();
-                img.addEventListener("load", () => {
-                    this.canvas.getContext("2d").drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
-                });
-                img.setAttribute("src", drawplace.canvas);
-            })
-
-            EventBus.$on('show_dialog', () => {
-                this.show_dialog()
-            })
+            this.create_canvas();
+            this.add_eventlistners();
+            this.start_listening_eventbus();
         }
     }
 </script>
