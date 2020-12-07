@@ -1,10 +1,6 @@
-import ReconnectingWebSocket from "reconnecting-websocket";
+var sharedb = require('sharedb/lib/client');
 
-export default class shareDBClient {
-    constructor() {
-        this.sharedb = require('sharedb/lib/client');
-        this.socket = new ReconnectingWebSocket('ws://127.0.0.1:8000');
-        this.connection = new this.sharedb.Connection(this.socket);
-        console.log('SHAREDB CLIENT CREATED SUCCESSFULLY')
-    }
-}
+// Expose a singleton WebSocket connection to ShareDB server
+var socket = new WebSocket('ws://' + '127.0.0.1:8000');
+var connection = new sharedb.Connection(socket);
+module.exports = connection;

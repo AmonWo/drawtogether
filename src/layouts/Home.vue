@@ -24,7 +24,8 @@
                         block
                         rounded
                         @click="save_drawplace"
-                >Save</v-btn>
+                >Save
+                </v-btn>
             </v-responsive>
         </v-app-bar>
 
@@ -66,8 +67,10 @@
                         class="d-block text-center mx-auto mb-9 tool-picker"
                         size="28"
                         @click="pick_tool(index)"
-                ><v-icon>mdi-{{ tool }}</v-icon></v-avatar>
-
+                >
+                    <v-icon>mdi-{{ tool }}</v-icon>
+                </v-avatar>
+                <p id="num-clicks">0</p>
             </v-navigation-drawer>
 
         </v-navigation-drawer>
@@ -128,15 +131,13 @@
 
 <script>
     import ColorPicker from "../components/features/ColorPicker";
-    import { EventBus } from '../plugins/eventbus'
-    // eslint-disable-next-line no-unused-vars
-    import ShareDB from "../plugins/sharedb_client";
+    import {EventBus} from '../plugins/eventbus'
+    import connection from "../plugins/sharedb_client";
+
     export default {
         components: {ColorPicker},
         data() {
             return {
-                client: null,
-                doc: null,
                 drawer: null,
                 tool: 'pencil',
                 colors: ['red', 'green', 'blue', 'cyan', '#FF00FF', 'yellow', 'black', 'white'],
@@ -145,7 +146,8 @@
                 alpha: 100,
                 brushSize: 5,
                 drawplace: null,
-                draw_place_stack: null
+                draw_place_stack: null,
+                query: connection.createSubscribeQuery('drawings')
             }
         },
         methods: {
@@ -161,45 +163,37 @@
             pick_tool(index) {
                 this.tool = this.tools[index]
             },
-            update_canvas_locally() {
-                this.canvas = this.doc.data.canvas
-            },
-            update_canvas_db() {
-                this.doc.submitOp([{canvasData: 'Hallo'}])
-            },
-            start_client() {
-                this.client = new ShareDB();
-                this.doc = this.client.connection.get('drawings', 'clipmon');
-                this.doc.subscribe(this.update_canvas_db());
-                this.doc.on('op', this.update_canvas_db())
-            },
             start_listening_eventbus() {
-                EventBus.$on('update_drawplace', (drawplace) => {
-                    this.drawplace = drawplace
+                EventBus.$on('update_from_sharedb', () => {
+                    this.$store.dispatch('update_from_sharedb', this.query)
                 });
                 EventBus.$on('new_color', (color) => {
                     let red = color[0];
                     let green = color[1];
                     let blue = color[2];
-                    this.brushColor = 'rgb(' + red +', ' + green + ', ' + blue + ')'
+                    this.brushColor = 'rgb(' + red + ', ' + green + ', ' + blue + ')'
                 });
-                EventBus.$on('update_canvas', () => {
-                   this.doc.submitOp()
-                })
             }
         },
         mounted() {
-            this.start_client();
+            const update = () => {
+                this.$store.dispatch('update_from_sharedb', this.query)
+            };
+
+            this.query.on('ready', update);
+            this.query.on('changed', update);
+
+
             this.start_listening_eventbus();
 
             let colorPickers = document.getElementsByClassName('basic-color-picker');
-            for(let i = 0; i < colorPickers.length; i++) {
+            for (let i = 0; i < colorPickers.length; i++) {
                 colorPickers[i].addEventListener('click', () => {
                     this.brushColor = this.colors[i]
                 })
             }
             let saved_drawplaces = document.getElementsByClassName('drawplace');
-            for(let i = 0; i < saved_drawplaces.length; i++) {
+            for (let i = 0; i < saved_drawplaces.length; i++) {
                 saved_drawplaces[i].addEventListener('click', () => {
                     EventBus.$emit('load_drawplace', this.$store.state.draw_place_stack[i].canvas)
                 })
@@ -210,6 +204,7 @@
             document.getElementById('color-picker').addEventListener('click', (e) => {
                 this.pick_color(e)
             })
+
         }
     }
 </script>
@@ -220,12 +215,13 @@
             width: 100%;
         }
     }
-    >>> .v-slider__thumb {
+
+    > > > .v-slider__thumb {
         height: 20px;
         width: 20px;
     }
 
-    >>> .v-slider--horizontal .v-slider__track-container {
+    > > > .v-slider--horizontal .v-slider__track-container {
         height: 10px;
     }
 </style>

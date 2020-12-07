@@ -1,48 +1,56 @@
-const http = require("http");
-const express = require("express");
-const ShareDB = require("sharedb");
-const WebSocket = require("ws");
-const WebSocketJSONStream = require("websocket-json-stream");
+var http = require('http');
+var express = require('express');
+var ShareDB = require('sharedb');
+var WebSocket = require('ws');
+var WebSocketJSONStream = require('@teamwork/websocket-json-stream');
 
-const app = express();
-app.use(express.static("static"));
-app.use(express.static("node_modules/quill/dist"));
+var backend = new ShareDB();
+createDoc(startServer);
 
-const backend = new ShareDB();
-const connection = backend.connect();
+const uniqId = val => {
+  return Math.random()
+      .toString(36)
+      .substr(2, 6)
+}
 
-// 0: Name of collection
-// 1: ID of document
-let doc = connection.get("examples", "richtext");
+// Create initial document then fire callback
+function createDoc(callback) {
+  var connection = backend.connect();
+  connection.createFetchQuery('drawings', {}, {}, function(err, results) {
+    if (err) { throw err; }
 
-doc.fetch(err => {
-  if (err) {
-    throw err;
-  }
-  if (doc.type === null) {
-    return doc.create([{ insert: "Say Something!" }], "clipmon", startServer);
-  }
-  startServer();
-});
+    if (results.length === 0) {
+      var doc = connection.get('drawings', '0');
+      var data = {con_id: 'connection.id', canvas: 'canvasData'};
+      doc.create(data);
+/*      var names = ["Ada Lovelace", "Grace Hopper", "Marie Curie",
+        "Carl Friedrich Gauss", "Nikola Tesla", "Claude Shannon"];
+
+      names.forEach(function(name, index) {
+        var doc = connection.get('drawings', '' + index);
+        var data = {name: name, score: Math.floor(Math.random() * 10) * 5, uid: uniqId(), tales: [1,2,3] };
+        doc.create(data);
+      });*/
+    } else {
+      console.log(connection.get('drawings', '0'))
+    }
+    callback();
+  });
+}
 
 function startServer() {
-  const server = http.createServer(app);
+  // Create a web server to serve files and listen to WebSocket connections
+  var app = express();
+  app.use(express.static('static'));
+  var server = http.createServer(app);
 
-  const ws = new WebSocket.Server({
-    server: server
+  // Connect any incoming WebSocket connection to ShareDB
+  var wss = new WebSocket.Server({server: server});
+  wss.on('connection', function(ws) {
+    var stream = new WebSocketJSONStream(ws);
+    backend.listen(stream);
   });
 
-  ws.on("connection", (ws, req) => {
-    console.log("New client connected");
-
-    backend.listen(new WebSocketJSONStream(ws));
-
-    ws.on("message", function message(msg) {
-      console.log(msg);
-    });
-  });
-
-  server.listen(8000, () =>
-    console.log(`Editor now live on http://${server.address().address}:${server.address().port}`)
-  );
+  server.listen(8000);
+  console.log(`Listening on ${server.address().address}${server.address().port}`);
 }

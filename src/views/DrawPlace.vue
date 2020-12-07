@@ -64,7 +64,7 @@
                 this.canvas = document.getElementById('draw-canvas');
                 this.drawingSpace = document.getElementById('draw-space');
                 this.ctx = this.canvas.getContext('2d');
-                this.canvas.height = this.drawingSpace.clientHeight - 30;
+                this.canvas.height = this.drawingSpace.clientHeight - 100;
                 this.canvas.width = this.drawingSpace.clientWidth - 335;
             },
             save_drawplace() {
@@ -75,6 +75,9 @@
                 });
                 this.show_dialog();
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+            },
+            submit_to_sharedb() {
+                this.$store.dispatch('submit_to_sharedb', this.canvas.toDataURL('image/png'))
             },
             show_dialog() {
               this.dialog = !this.dialog
@@ -118,7 +121,6 @@
                 }
                 if (res === 'up' || res === 'out') {
                     this.flag = false;
-                    EventBus.$emit('update_drawplace', {canvas: this.canvas, ctx: this.ctx})
                 }
                 if (res === 'move') {
                     if (this.flag) {
@@ -129,11 +131,6 @@
                         this.draw()
                     }
                 }
-            },
-            update_canvas(){
-                console.log('EMIT UPDATE_CANVAS');
-                const data = this.canvas.toDataURL('image/png');
-                EventBus.$emit('update_canvas', data)
             },
             add_eventlistners() {
                 this.canvas.addEventListener("mousemove", (e) => {
@@ -146,7 +143,7 @@
 
                 this.canvas.addEventListener('mouseup', (e) => {
                     this.find_mouse_pos('up', e);
-                    this.update_canvas()
+                    this.submit_to_sharedb()
                 });
 
                 this.canvas.addEventListener('mouseout', (e) => {
@@ -167,12 +164,24 @@
                 EventBus.$on('show_dialog', () => {
                     this.show_dialog()
                 })
+            },
+            draw_updated_canvas() {
+                EventBus.$emit('update_from_sharedb');
+                let drawplace = this.$store.state.draw_place_stack[0];
+                console.log(drawplace)
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                var img = new window.Image();
+                img.addEventListener("load", () => {
+                    this.canvas.getContext("2d").drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+                });
+                img.setAttribute("src", drawplace.canvas);
             }
         },
         mounted() {
             this.create_canvas();
             this.add_eventlistners();
             this.start_listening_eventbus();
+            this.draw_updated_canvas()
         }
     }
 </script>
