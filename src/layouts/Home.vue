@@ -132,7 +132,7 @@
 <script>
     import ColorPicker from "../components/features/ColorPicker";
     import {EventBus} from '../plugins/eventbus'
-    import connection from "../plugins/sharedb_client";
+
 
     export default {
         components: {ColorPicker},
@@ -147,7 +147,7 @@
                 brushSize: 5,
                 drawplace: null,
                 draw_place_stack: null,
-                query: connection.createSubscribeQuery('drawings')
+
             }
         },
         methods: {
@@ -164,9 +164,6 @@
                 this.tool = this.tools[index]
             },
             start_listening_eventbus() {
-                EventBus.$on('update_from_sharedb', () => {
-                    this.$store.dispatch('update_from_sharedb', this.query)
-                });
                 EventBus.$on('new_color', (color) => {
                     let red = color[0];
                     let green = color[1];
@@ -176,14 +173,6 @@
             }
         },
         mounted() {
-            const update = () => {
-                this.$store.dispatch('update_from_sharedb', this.query)
-            };
-
-            this.query.on('ready', update);
-            this.query.on('changed', update);
-
-
             this.start_listening_eventbus();
 
             let colorPickers = document.getElementsByClassName('basic-color-picker');
@@ -199,7 +188,7 @@
                 })
             }
 
-            this.draw_place_stack = this.$store.state.draw_place_stack
+            this.draw_place_stack = this.$store.state.draw_place_stack;
 
             document.getElementById('color-picker').addEventListener('click', (e) => {
                 this.pick_color(e)

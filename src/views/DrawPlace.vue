@@ -32,6 +32,7 @@
 
 <script>
     import {EventBus} from '../plugins/eventbus'
+    import connection from "../plugins/sharedb_client";
 
     export default {
         name: "DrawPlace",
@@ -43,6 +44,11 @@
                 default: 5
             },
             tool: String,
+        },
+        computed: {
+            draw_place_stack: function () {
+                return this.$store.state.draw_place_stack
+            }
         },
         data() {
             return {
@@ -56,7 +62,9 @@
                 ctx: null,
                 drawingSpace: null,
                 dialog: false,
-                title: ""
+                title: "",
+                query: null,
+                doc: null,
             }
         },
         methods: {
@@ -77,7 +85,12 @@
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
             },
             submit_to_sharedb() {
-                this.$store.dispatch('submit_to_sharedb', this.canvas.toDataURL('image/png'))
+                let payload = {
+                    canvas: this.canvas.toDataURL('image/png'),
+                    connection: connection,
+                    doc: this.doc
+                };
+                this.$store.dispatch('submit_to_sharedb', payload)
             },
             show_dialog() {
               this.dialog = !this.dialog
@@ -166,22 +179,39 @@
                 })
             },
             draw_updated_canvas() {
-                EventBus.$emit('update_from_sharedb');
-                let drawplace = this.$store.state.draw_place_stack[0];
-                console.log(drawplace)
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                console.log('DRAW UPDATED CANVAS')
+                let drawplace = this.$store.getters.getDrawplaceStack;
+                console.log('drawplace: ', drawplace);
+                //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 var img = new window.Image();
                 img.addEventListener("load", () => {
                     this.canvas.getContext("2d").drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
                 });
-                img.setAttribute("src", drawplace.canvas);
+                img.setAttribute("src", drawplace[0].canvas);
+
+                this.draw()
+            },
+            connect_to_sharedb() {
+                this.doc = connection.get('drawings', '0');
+                let doc = this.doc;
+                const update = () => {
+                    console.log('QUERY GOT UPDATED');
+                    this.$store.dispatch('update_from_sharedb', connection);
+                    this.draw_updated_canvas();
+                };
+                this.doc.on('ready', update);
+                this.doc.subscribe(function(err) {
+                    if (err) throw err;
+                    doc.on('op', update);
+                });
+
             }
         },
         mounted() {
             this.create_canvas();
+            this.connect_to_sharedb();
             this.add_eventlistners();
             this.start_listening_eventbus();
-            this.draw_updated_canvas()
         }
     }
 </script>
