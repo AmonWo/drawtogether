@@ -1,4 +1,6 @@
-var http = require('http');
+//var http = require('http');
+var https = require('https');
+var fs = require('fs')
 var express = require('express');
 var ShareDB = require('sharedb');
 var WebSocket = require('ws');
@@ -42,8 +44,11 @@ function createNewDoc() {
 function startServer() {
   // Create a web server to serve files and listen to WebSocket connections
   var app = express();
+  var crt = fs.readFileSync(__dirname + '/ssl/ssl.crt', 'utf-8')
+  var pk = fs.readFileSync(__dirname + '/ssl/ssl.key', 'utf-8')
+  var credentials = {key: pk, cert: crt}
   app.use(express.static('static'));
-  var server = http.createServer(app);
+  var server = https.createServer(credentials, app);
   // Connect any incoming WebSocket connection to ShareDB
   var wss = new WebSocket.Server({server: server});
   wss.on('connection', function(ws) {
@@ -53,6 +58,11 @@ function startServer() {
     console.log(backend.db.docs)
   });
 
-  server.listen(8000);
-  console.log(`Listening on ${server.address().address}${server.address().port}`);
+  //let hostname = 'dev.amonwondra.de'
+  let hostname = 'localhost'
+  let port = 8000
+
+  server.listen(port, hostname);
+  console.log(server.address())
+  console.log(`Listening on ${hostname}:${port}`);
 }
