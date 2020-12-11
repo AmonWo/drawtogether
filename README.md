@@ -27,3 +27,10 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 mongo -u admin -p --authenticationDatabase admin <- Opening Shell with user "admin"
 use admin <- Grant your shell instance admin rights
+
+### Apache Node Service
+Enable the Service
+    systemctl enable nodeserver.service
+    
+Start the service
+    systemctl start nodeserver.service

@@ -1,247 +1,309 @@
 <template>
-  <v-app id="inspire">
-    <v-system-bar app>
-      <v-spacer></v-spacer>
-
-      <v-icon>mdi-square</v-icon>
-
-      <v-icon>mdi-circle</v-icon>
-
-      <v-icon>mdi-triangle</v-icon>
-    </v-system-bar>
-
-    <v-app-bar
-        app
-        clipped-right
-        flat
-        height="72"
-    >
-      <v-spacer></v-spacer>
-
-      <v-responsive max-width="156">
-        <v-btn
-            color="green"
-            block
-            rounded
-            @click="save_drawplace"
-        >Save
-        </v-btn>
-      </v-responsive>
-    </v-app-bar>
-
-    <v-navigation-drawer
-        v-model="drawer"
-        app
-        width="50"
-    >
-      <v-navigation-drawer
-          v-model="drawer"
-          absolute
-          color="grey darken-3"
-          mini-variant
-      >
-        <v-avatar
-            id="color-picker"
-            class="d-flex text-center mx-auto mt-4 justify-center"
-            color="grey darken-1"
-            size="36"
+    <v-app id="inspire">
+        <v-app-bar
+                clipped-right
+                flat
+                height="72"
+                color="transparent"
+                absolute
+                z-index="0"
         >
-          <ColorPicker :size="36"></ColorPicker>
-        </v-avatar>
+            <v-spacer></v-spacer>
+            <v-responsive max-width="120" class="px-2">
+                <v-btn
+                        height="40"
+                        width="110"
+                        class="black--text font-weight-bold"
+                        color="lightgray"
+                        block
+                        @click="save_drawplace"
+                        style="z-index: 999"
+                >Speichern
+                </v-btn>
+            </v-responsive>
+            <v-responsive max-width="120" class="px-2">
+                <v-btn
+                        height="40"
+                        width="110"
+                        class="black--text font-weight-bold"
+                        color="yellow"
+                        block
+                        @click="this.get_share_link"
+                >Draw teilen
+                </v-btn>
+            </v-responsive>
+            <v-responsive max-width="30" class="px-2">
+                <v-icon class="hand-cursor">$DownloadIcon</v-icon>
+            </v-responsive>
+        </v-app-bar>
 
-        <v-divider class="mx-3 my-5"></v-divider>
-
-        <v-avatar
-            v-for="color of this.colors"
-            :key="color"
-            class="d-block text-center mx-auto mb-9 basic-color-picker"
-            :color="color"
-            size="28"
-        ></v-avatar>
-
-        <v-divider class="mx-3 my-5"></v-divider>
-
-        <v-avatar
-            v-for="(tool, index) of this.tools"
-            :key="tool"
-            class="d-block text-center mx-auto mb-9 tool-picker"
-            size="28"
-            @click="pick_tool(index)"
+        <v-navigation-drawer
+                v-model="drawer"
+                width="90"
+                absolute
+                floating
+                color="transparent"
         >
-          <v-icon>mdi-{{ tool }}</v-icon>
-        </v-avatar>
-      </v-navigation-drawer>
+            <v-container fluid fill-height>
+                <v-col class="toolbar d-flex justify-space-between flex-column">
+                    <div
+                            class="tool-container hand-cursor"
+                            style="height:42px; width: 42px; border-radius: 50%; display: flex; justify-content: center"
+                            v-for="(tool, index) of this.tools"
+                            :key="tool"
+                            @click="pick_tool(index, $event)"
+                    >
+                        <v-icon
+                                color="black"
+                        >mdi-{{ tool }}
+                        </v-icon>
+                    </div>
+                </v-col>
+            </v-container>
+        </v-navigation-drawer>
 
-    </v-navigation-drawer>
+        <!-- <v-navigation-drawer
+             app
+             clipped
+             right
+         >
+           <v-list>
+             <v-list-item
+                 v-for="drawplace of this.draw_place_stack"
+                 :key="drawplace.title"
+                 link
+                 class="drawplace"
+                 @click="load_drawplace(drawplace)"
+             >
+               <v-list-item-content>
+                 <v-list-item-title>{{ drawplace.title }}</v-list-item-title>
+               </v-list-item-content>
+             </v-list-item>
+           </v-list>
+         </v-navigation-drawer>-->
 
-    <v-navigation-drawer
-        app
-        clipped
-        right
-    >
-      <v-list>
-        <v-list-item
-            v-for="drawplace of this.draw_place_stack"
-            :key="drawplace.title"
-            link
-            class="drawplace"
-            @click="load_drawplace(drawplace)"
-        >
-          <v-list-item-content>
-            <v-list-item-title>{{ drawplace.title }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
+        <v-main>
+            <router-view
+                    :brushColor="brushColor"
+                    :alpha="alpha"
+                    :brushSize="brushSize"
+                    :tool="tool"
+                    :drawplaceName="drawplaceName"
 
-    <v-main>
-      <router-view :brushColor="brushColor" :alpha="alpha" :brushSize="brushSize" :tool="tool" :drawplaceName="drawplaceName"></router-view>
-      <v-dialog v-model="newUser"
-                max-width="290"
-                persistent
-      >
-        <v-card>
-          <v-card-title class="headline">
-            Name des Drawplace
-          </v-card-title>
-          <v-text-field
-              class="pa-10"
-              label="Name"
-              placeholder="Gib einen Namen ein"
-              v-model="drawplaceName"
-          ></v-text-field>
-          <v-card-actions>
-            <v-btn
-                color="green"
-                text
-                @click="connect_to_sharedb()"
-                width="100%"
+            />
+            <v-dialog v-model="newUser"
+                      max-width="290"
+                      persistent
             >
-              Speichern
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-
-      </v-dialog>
-    </v-main>
-
-    <v-footer
-        app
-        color="transparent"
-        height="100"
-        inset
-    >
-      <v-slider
-          label="Opacity"
-          v-model="alpha"
-          min="0"
-          max="1"
-          step="0.01"
-          ticks
-          class="config-slider my-0 py-0"
-          thumb-label
-      ></v-slider>
-      <v-slider
-          label="Brushsize"
-          v-model="brushSize"
-          min="0"
-          max="100"
-          step="1"
-          ticks
-          class="my-0 py-0"
-          thumb-label
-      ></v-slider>
-    </v-footer>
-  </v-app>
+                <v-card>
+                    <v-card-title class="headline">
+                        Name des Drawplace
+                    </v-card-title>
+                    <v-text-field
+                            class="pa-10"
+                            label="Name"
+                            placeholder="Gib einen Namen ein"
+                            v-model="drawplaceName"
+                    ></v-text-field>
+                    <v-card-actions>
+                        <v-btn
+                                color="green"
+                                text
+                                @click="connect_to_sharedb()"
+                                width="100%"
+                        >
+                            Speichern
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+            <v-dialog v-model="share"
+                      max-width="420"
+            >
+                <v-card>
+                    <v-card-title class="headline">
+                        Schicke den Link an deine Freunde
+                    </v-card-title>
+                    <v-text-field
+                            class="pa-10 sharelink"
+                            v-model="shareLink"
+                            readonly
+                            @focus="$event.target.select()"
+                            style="text-align: center"
+                    ></v-text-field>
+                </v-card>
+            </v-dialog>
+        </v-main>
+        <v-footer
+                color="transparent"
+                height="60"
+                width="100%"
+                inset
+                absolute
+                class="footer"
+        >
+            <transition name="fade">
+                <v-color-picker
+                        id="color-picker"
+                        v-show="showColorPicker"
+                        dot-size="25"
+                        swatches-max-height="200"
+                        v-model="brushColor"
+                />
+            </transition>
+            <div class="colorbar mx-auto d-flex flex-row flex-nowrap justify-space-between align-center px-6">
+                <v-avatar
+                        id="color-picker-button"
+                        class="basic-color-picker hand-cursor"
+                        color="grey darken-1"
+                        size="20"
+                        @click="show_colorpicker"
+                >
+                    <ColorPicker :size="20"></ColorPicker>
+                </v-avatar>
+                <v-avatar
+                        v-for="color of this.colors"
+                        :key="color"
+                        class="basic-color-picker hand-cursor"
+                        :color="color"
+                        size="20"
+                        @click="pick_color(color)"
+                ></v-avatar>
+                <v-avatar
+                        v-for="size of this.brushSizes"
+                        class="basic-color-picker hand-cursor"
+                        :key="size"
+                        size="20"
+                >
+                    <v-icon>${{size}}</v-icon>
+                </v-avatar>
+            </div>
+        </v-footer>
+    </v-app>
 </template>
 
 <script>
-import ColorPicker from "../components/features/ColorPicker";
-import {EventBus} from '../plugins/eventbus'
+    import ColorPicker from "../components/features/ColorPicker";
+    import {EventBus} from '../plugins/eventbus'
 
 
-export default {
-  components: {ColorPicker},
-  data() {
-    return {
-      drawer: null,
-      tool: 'pencil',
-      colors: ['red', 'green', 'blue', 'cyan', '#FF00FF', 'yellow', 'black', 'white'],
-      tools: ['pencil', 'eraser'],
-      brushColor: 'white',
-      alpha: 100,
-      brushSize: 5,
-      drawplace: null,
-      draw_place_stack: null,
-      newUser: true,
-      drawplaceName: ''
+    export default {
+        components: {ColorPicker},
+        data() {
+            return {
+                drawer: null,
+                tool: 'pencil',
+                brushColor: 'black',
+                alpha: 100,
+                brushSize: 5,
+                colors: ['red', 'green', 'blue'],
+                tools: ['pencil', 'eraser', 'shape-outline', 'note-outline', 'format-text', 'format-color-text'],
+                brushSizes: ['BrushSizeSmall', 'BrushSizeMedium', 'BrushSizeLarge'],
+                showColorPicker: false,
+                drawplace: null,
+                draw_place_stack: null,
+                newUser: true,
+                drawplaceName: '',
+                shareLink: '',
+                share: false
+            }
+        },
+        methods: {
+            get_share_link() {
+                this.share = !this.share;
+                this.shareLink = 'https://dev.amonwondra.de/?drawplace=' + this.drawplaceName
+            },
+            save_drawplace() {
+                EventBus.$emit('show_dialog')
+            },
+            load_drawplace(drawplace) {
+                EventBus.$emit('load_drawplace', drawplace)
+            },
+            show_colorpicker() {
+                this.showColorPicker = !this.showColorPicker
+            },
+            pick_color(brushColor) {
+                this.brushColor = brushColor
+            },
+            pick_tool(index, event) {
+                console.log(event.target);
+                this.tool = this.tools[index]
+            },
+            add_eventlisteners() {
+                let cp = document.getElementById('color-picker');
+                let cpb = document.getElementById('color-picker-button');
+                cp.addEventListener('mouseleave', () => {
+                    this.showColorPicker = !this.showColorPicker
+                });
+                cpb.addEventListener('mouseenter', () => {
+                    this.showColorPicker = !this.showColorPicker
+                });
+            },
+            start_listening_eventbus() {
+                EventBus.$on('new_color', (color) => {
+                    let red = color[0];
+                    let green = color[1];
+                    let blue = color[2];
+                    this.brushColor = 'rgb(' + red + ', ' + green + ', ' + blue + ')'
+                });
+            },
+            connect_to_sharedb() {
+                this.newUser = false;
+                EventBus.$emit('connect_to_sharedb');
+                console.log('CONNECT_TO_SHAREDB emitted from HOME.VUE')
+            }
+        },
+        beforeMount() {
+            if (this.$route.query.drawplace) {
+                console.log('URL QUERY: ', this.$route.query.drawplace);
+                this.drawplaceName = this.$route.query.drawplace;
+                this.newUser = false;
+            }
+        },
+        mounted() {
+            if (!this.newUser)
+                this.connect_to_sharedb();
+            this.add_eventlisteners();
+            this.start_listening_eventbus();
+        }
     }
-  },
-  methods: {
-    save_drawplace() {
-      EventBus.$emit('show_dialog')
-    },
-    load_drawplace(drawplace) {
-      EventBus.$emit('load_drawplace', drawplace)
-    },
-    pick_color(event) {
-      EventBus.$emit('pick_color', {parent: document.getElementById('color-picker'), e: event})
-    },
-    pick_tool(index) {
-      this.tool = this.tools[index]
-    },
-    start_listening_eventbus() {
-      EventBus.$on('new_color', (color) => {
-        let red = color[0];
-        let green = color[1];
-        let blue = color[2];
-        this.brushColor = 'rgb(' + red + ', ' + green + ', ' + blue + ')'
-      });
-    },
-    connect_to_sharedb() {
-      EventBus.$emit('connect_to_sharedb');
-      this.newUser = !this.newUser
-    }
-  },
-  mounted() {
-    this.start_listening_eventbus();
-
-    let colorPickers = document.getElementsByClassName('basic-color-picker');
-    for (let i = 0; i < colorPickers.length; i++) {
-      colorPickers[i].addEventListener('click', () => {
-        this.brushColor = this.colors[i]
-      })
-    }
-    let saved_drawplaces = document.getElementsByClassName('drawplace');
-    for (let i = 0; i < saved_drawplaces.length; i++) {
-      saved_drawplaces[i].addEventListener('click', () => {
-        EventBus.$emit('load_drawplace', this.$store.state.draw_place_stack[i].canvas)
-      })
-    }
-
-    this.draw_place_stack = this.$store.state.draw_place_stack;
-
-    document.getElementById('color-picker').addEventListener('click', (e) => {
-      this.pick_color(e)
-    })
-
-  }
-}
 </script>
 
 <style scoped lang="scss">
-.v-footer {
-  .config-slider {
-    width: 100%;
-  }
-}
 
-> > > .v-slider__thumb {
-  height: 20px;
-  width: 20px;
-}
+    .hand-cursor {
+      cursor: pointer;
+    }
 
-> > > .v-slider--horizontal .v-slider__track-container {
-  height: 10px;
-}
+    .toolbar {
+        height: 320px;
+        width: 60px;
+        background-color: white;
+        border-radius: 6px;
+        box-shadow: -24px 0px 156px rgba(0, 0, 0, 0.259562);
+
+    }
+
+    .footer {
+        left: auto !important;
+        right: auto !important;
+
+        .colorbar {
+            width: 360px;
+            border-radius: 6px;
+            height: 100%;
+            background-color: black;
+        }
+
+        #color-picker {
+            border: 1px solid gray;
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    }
+
 </style>

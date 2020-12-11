@@ -18,7 +18,7 @@ const routes = [
     component: Home,
     children: [
       {
-        path: "/home",
+        path: "/",
         name: "home",
         component: DrawPlace,
         meta: {
@@ -26,7 +26,8 @@ const routes = [
         },
         props: true
       }
-    ]
+    ],
+
    /* children: [
       {
         path: "/login",
@@ -63,6 +64,10 @@ const routes = [
       },
     ],*/
   },
+  {
+    path: "/home",
+    component: Home
+  }
 ];
 
 export default new VueRouter({
