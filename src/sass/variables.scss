@@ -9,6 +9,8 @@ $btn-sizes: ( default: 41, large: 54 );
 $btn-letter-spacing: 0;
 $btn-font-weight: 400;
 $card-text-font-size: 16px;
+// Animationen
+$transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
 
 $headings: (
   'h1': (

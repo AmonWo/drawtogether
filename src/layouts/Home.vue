@@ -41,23 +41,16 @@
                         v-for="(tool, index) of this.tools"
                         :key="tool"
                         @click="pick_tool(index, $event)"
-                        style="border: 1px solid red"
-                        :class="tool"
+                        class="tool-row"
                 >
-                    <div class="tool-container hand-cursor visible">
+                    <div class="tool-container hand-cursor visible" v-if="tool !== 'shape-outline'">
                         <v-icon
                                 color="black"
                         >mdi-{{ tool }}
                         </v-icon>
                     </div>
-                    <div class="tool-container more-tools" v-if="tool === 'shape-outline'">
-                        <v-icon color="black">mdi-rectangle-outline</v-icon>
-                    </div>
-                    <div class="tool-container more-tools" v-if="tool === 'shape-outline'">
-                        <v-icon color="black">mdi-circle-outline</v-icon>
-                    </div>
-                    <div class="tool-container more-tools" v-if="tool === 'shape-outline'">
-                        <v-icon color="black">mdi-triangle-outline</v-icon>
+                    <div class="hand-cursor visible" @click="show_more_shapes" v-else>
+                        <ShapeSelector/>
                     </div>
                 </v-row>
             </v-col>
@@ -166,10 +159,11 @@
 <script>
     import ColorPicker from "../components/features/ColorPicker";
     import {EventBus} from '../plugins/eventbus'
+    import ShapeSelector from "../components/features/ShapeSelector";
 
 
     export default {
-        components: {ColorPicker},
+        components: {ShapeSelector, ColorPicker},
         data() {
             return {
                 drawer: null,
@@ -177,12 +171,11 @@
                 brushColor: 'black',
                 alpha: 100,
                 brushSize: 5,
-                colors: ['red', 'green', 'blue'],
+                colors: ['#FF0000', '#00FF00', '#0000FF'],
                 tools: ['pencil', 'eraser', 'shape-outline', 'note-outline', 'format-text', 'format-color-text'],
                 brushSizes: ['BrushSizeSmall', 'BrushSizeMedium', 'BrushSizeLarge'],
                 showColorPicker: false,
                 drawplace: null,
-                draw_place_stack: null,
                 newUser: true,
                 drawplaceName: '',
                 shareLink: '',
@@ -225,8 +218,8 @@
             pick_color(brushColor) {
                 this.brushColor = brushColor
             },
+            // eslint-disable-next-line no-unused-vars
             pick_tool(index, event) {
-                console.log(event.target);
                 this.tool = this.tools[index]
             },
             add_eventlisteners() {
@@ -247,6 +240,10 @@
                 this.newUser = false;
                 EventBus.$emit('connect_to_sharedb');
                 console.log('CONNECT_TO_SHAREDB emitted from HOME.VUE')
+            },
+            show_more_shapes() {
+                console.log('EVENTBUS: SHOW_MORE_SHAPES');
+                EventBus.$emit('show_more_shapes')
             }
         },
         beforeMount() {
@@ -291,24 +288,32 @@
             box-shadow: -24px 0px 156px rgba(0, 0, 0, 0.259562);
 
             .tool-container {
+                color: black;
+                background-color: white;
                 height: 42px;
                 width: 42px;
                 border-radius: 50%;
                 display: flex;
                 justify-content: center;
                 border: 1px solid black;
+                filter: invert(0);
+                transition: all .25s $transition-timing-function;
+            }
+
+            .tool-container:hover {
+                filter: invert(100%);
             }
 
             .more-tools {
                 position: absolute;
                 transform: translateX(45px);
             }
-
-            .shape-outline {
-                width: fit-content;
+            .tool-row {
+                justify-content: center;
                 flex-wrap: nowrap;
                 overflow: hidden;
-                //flex-direction: row;
+                margin-left: auto;
+                margin-right: auto;
             }
         }
     }

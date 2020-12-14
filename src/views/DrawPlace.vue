@@ -51,8 +51,8 @@
             drawplaceName: String,
         },
         computed: {
-            draw_place_stack: function () {
-                return this.$store.state.draw_place_stack
+            drawplace: function () {
+                return this.$store.state.drawplace
             }
         },
         data() {
@@ -66,7 +66,19 @@
                 mouse_pos: {x: 0, y: 0},
                 old_pos: {x: 0, y: 0},
                 new_pos: {x: 0, y: 0},
-                mouse_moves: []
+                mouse_moves: [],
+                shapes: [],
+                drawMethod: 'draw',
+                rect: {
+                    startX: 0,
+                    startY: 0,
+                    w: 0,
+                    h: 0,
+                    drag: false,
+                    type: 'rect',
+                    color: 'black',
+                },
+                mouseEvent: null
             }
         },
         methods: {
@@ -74,95 +86,162 @@
                 this.canvas = document.getElementById('draw-canvas');
                 this.drawingSpace = document.getElementById('draw-space');
                 this.ctx = this.canvas.getContext('2d');
-                this.canvas.style.width = '100%'
-                this.canvas.style.height = '100%'
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = '100%';
                 this.canvas.height = this.canvas.offsetHeight;
                 this.canvas.width = this.canvas.offsetWidth;
                 console.log('CREATED CANVAS from DRAWPLACE.VUE')
             },
             save_drawplace() {
-                const data = this.canvas.toDataURL('image/png');
-                this.$store.commit('save_drawplace', {
-                    title: this.title,
-                    canvas: data,
-                });
-                this.show_dialog();
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+                /*                const data = this.canvas.toDataURL('image/png');
+                                this.$store.commit('save_drawplace', {
+                                    title: this.title,
+                                    canvas: data,
+                                });
+                                this.show_dialog();
+                                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)*/
             },
             submit_to_sharedb() {
                 let payload = {
                     drawplaceName: this.drawplaceName,
-                    canvas: this.mouse_moves,
+                    paths: this.mouse_moves,
+                    shapes: this.shapes,
                     connection: connection,
                     doc: this.doc
                 };
-                this.$store.dispatch('submit_to_sharedb', payload)
-                this.mouse_moves = []
+                this.$store.dispatch('submit_to_sharedb', payload);
+                this.mouse_moves = [];
+                this.shapes = [];
+                this.rect = {startX: 0, startY: 0, w: 0, h: 0}
             },
             show_dialog() {
                 this.dialog = !this.dialog
             },
             draw(e, redraw = false, newData = null) {
-                if (this.tool === 'pencil') {
-                    this.ctx.globalCompositeOperation = 'source-over'
-                } else if (this.tool === 'eraser') {
-                    this.ctx.globalCompositeOperation = 'destination-out'
-                }
-                if (e != null) {
-                    if (e.buttons !== 1) return;
-                }
-                this.ctx.lineWidth = this.brushSize;
-                this.ctx.lineCap = 'round';
-                this.ctx.strokeStyle = this.brushColor;
-                if (!redraw) {
-                    this.ctx.beginPath(); // begin
-                    this.ctx.globalAlpha = this.alpha
-                    this.ctx.moveTo(this.mouse_pos.x, this.mouse_pos.y); // from
-                    this.old_pos = {x: this.mouse_pos.x, y: this.mouse_pos.y}
-                    //this.mouse_moves.push(this.old_pos)
-                    this.find_mouse_pos(e);
-                    this.new_pos = {
-                        x: this.mouse_pos.x,
-                        y: this.mouse_pos.y,
-                        bs: this.brushSize,
-                        bc: this.brushColor,
-                        op: this.alpha
-                    }
-                    this.mouse_moves.push(this.new_pos)
-                    this.ctx.lineTo(this.mouse_pos.x, this.mouse_pos.y); // to
-                    this.ctx.stroke();
-                    this.ctx.closePath()
-                } else {
-                    for (let i = 0; i < newData.length; i++) {
-                        for (let j = 0; j < newData[i].length; j++) {
-                            this.ctx.beginPath()
-                            this.ctx.lineWidth = newData[i][j].bs
-                            this.ctx.strokeStyle = newData[i][j].bc
-                            this.ctx.globalAlpha = newData[i][j].op
-                            this.ctx.moveTo(newData[i][j].x, newData[i][j].y)
-                            if (j + 1 < newData[i].length) {
-                                this.ctx.lineTo(newData[i][j + 1].x, newData[i][j + 1].y)
-                            } else {
-                                this.ctx.lineTo(newData[i][j].x, newData[i][j].y)
+                switch (this.drawMethod) {
+                    case "draw":
+                        if (e != null) {
+                            if (e.buttons !== 1) return;
+                        }
+                        if (this.tool === 'pencil') {
+                            this.ctx.globalCompositeOperation = 'source-over';
+                            this.ctx.strokeStyle = this.brushColor;
+                        } else if (this.tool === 'eraser') {
+                            this.ctx.globalCompositeOperation = 'destination-out';
+                            this.ctx.strokeStyle = 'black'
+                        }
+                        this.ctx.lineWidth = this.brushSize;
+                        this.ctx.lineCap = 'round';
+                        if (!redraw) {
+                            this.ctx.beginPath(); // begin
+                            this.ctx.globalAlpha = this.alpha;
+                            this.ctx.moveTo(this.mouse_pos.x, this.mouse_pos.y); // from
+                            this.old_pos = {x: this.mouse_pos.x, y: this.mouse_pos.y};
+                            //this.mouse_moves.push(this.old_pos)
+                            this.find_mouse_pos(e);
+                            this.new_pos = {
+                                x: this.mouse_pos.x,
+                                y: this.mouse_pos.y,
+                                bs: this.brushSize,
+                                bc: this.brushColor,
+                                op: this.alpha,
+                                tool: this.tool
                             }
-                            this.ctx.stroke()
+                            this.mouse_moves.push(this.new_pos)
+                            this.ctx.lineTo(this.mouse_pos.x, this.mouse_pos.y); // to
+                            this.ctx.stroke();
                             this.ctx.closePath()
+                        } else {
+                            //console.log('REDRAW: ', newData);
+                            let path = new Path2D();
+                            for (let i = 0; i < newData.length; i++) {
+                                if (newData[i].tool === 'pencil') {
+                                    this.ctx.globalCompositeOperation = 'source-over';
+                                    this.ctx.lineWidth = newData[i].bs;
+                                    this.ctx.strokeStyle = newData[i].bc;
+                                    this.ctx.globalAlpha = newData[i].op;
+                                } else if (newData[i].tool === 'eraser') {
+                                    this.ctx.globalCompositeOperation = 'destination-out';
+                                    this.ctx.lineWidth = newData[i].bs;
+                                    this.ctx.strokeStyle = 'black';
+                                    this.ctx.globalAlpha = newData[i].op;
+                                }
+                                if (i === 0) {
+                                    path.moveTo(newData[0].x, newData[0].y)
+                                } else {
+                                    path.lineTo(newData[i].x, newData[i].y)
+                                }
+                                this.ctx.lineWidth = newData[i].bs;
+                                this.ctx.strokeStyle = newData[i].bc;
+                                this.ctx.globalAlpha = newData[i].op;
+                            }
+                            this.ctx.stroke(path);
+                            path.closePath();
+                        }
+                        break;
+                    case 'rectangle':
+                        this.draw_rectangle(e, redraw, newData);
+                        break;
+                }
+            },
+            draw_rectangle(e, redraw, newData) {
+                if (!redraw) {
+                    if (e.buttons === 1) {
+                        this.ctx.globalCompositeOperation = 'source-over';
+                        if (this.rect.startX === 0 && this.rect.startY === 0) {
+                            this.rect.startX = this.mouse_pos.x;
+                            this.rect.startY = this.mouse_pos.y;
+                            this.rect.drag = true;
+                        }
+                        this.find_mouse_pos(e);
+                        //console.log(this.rect.startX, this.rect.startY, this.mouse_pos.x, this.mouse_pos.y);
+                        this.rect.w = this.mouse_pos.x - this.rect.startX;
+                        this.rect.h = this.mouse_pos.y - this.rect.startY;
+                        this.rect.color = this.brushColor;
+                        this.ctx.strokeStyle = this.rect.color;
+                        this.ctx.fillStyle = this.rect.color;
+                        this.ctx.rect(this.rect.startX, this.rect.startY, this.rect.w, this.rect.h);
+                    }
+                } else {
+                    if (newData !== null) {
+                        this.ctx.globalCompositeOperation = 'source-over';
+                        for (let i = 0; i < newData.length; i++) {
+                            //console.log('NEWDATA', newData[i]);
+                            this.ctx.beginPath();
+                            this.ctx.strokeStyle = newData[i].color;
+                            this.ctx.fillStyle = newData[i].color;
+                            this.ctx.rect(newData[i].startX, newData[i].startY, newData[i].w, newData[i].h);
+                            this.ctx.stroke();
+                            this.ctx.fill()
                         }
                     }
 
                 }
+
+            },
+            draw_circle() {
+
+            },
+            draw_triangle() {
+
             },
             find_mouse_pos(e) {
+                //this.mouseEvent = e;
                 var rect = this.canvas.getBoundingClientRect();
                 this.mouse_pos.x = (e.clientX - rect.left) / (rect.right - rect.left) * this.canvas.width;
                 this.mouse_pos.y = (e.clientY - rect.top) / (rect.bottom - rect.top) * this.canvas.height;
             },
             add_eventlisteners() {
                 this.canvas.addEventListener('mousemove', this.draw);
+                //this.canvas.addEventListener('mousemove', this.find_mouse_pos);
                 this.canvas.addEventListener('touchmove', this.draw);
                 this.canvas.addEventListener('mousedown', this.find_mouse_pos);
                 this.canvas.addEventListener('mouseenter', this.find_mouse_pos);
+                this.canvas.addEventListener('mouseup', this.find_mouse_pos);
                 this.canvas.addEventListener('mouseup', () => {
+                    if (this.rect.startX !== 0 && this.rect.startY !== 0)
+                        this.ctx.stroke();
+                        this.shapes.push(this.rect);
                     this.submit_to_sharedb()
                 });
                 this.canvas.addEventListener('touchend', () => {
@@ -171,20 +250,51 @@
                 this.canvas.addEventListener('touchcancel', () => {
                     this.submit_to_sharedb()
                 });
+                this.canvas.addEventListener('dblclick', (e) => {
+                    this.find_mouse_pos(e);
+                    let shapes = this.$store.getters.getDrawplace.shapes;
+                    for (let i = 0; i < shapes; i++) {
+                        if (this.mouse_pos.x >= shapes.startX && this.mouse_pos.x <= shapes.w){
+                            if(this.mouse_pos.y >= shapes.startY && this.mouse_pos.y <= shapes.h){
+                                console.log('RECT CLICKED')
+                            }
+                        }
+                    }
+                });
                 console.log('EVENTLISTENERS ADDED in DRAWPLACE.VUE')
             },
             start_listening_eventbus() {
                 EventBus.$on('show_dialog', () => {
                     this.show_dialog()
-                })
+                });
                 EventBus.$on('connect_to_sharedb', () => {
                     this.connect_to_sharedb()
-                })
+                });
+                EventBus.$on('draw_rectangle', () => {
+                    this.drawMethod = 'rectangle'
+                });
+                EventBus.$on('draw_circle', () => {
+
+                });
+                EventBus.$on('draw_triangle', () => {
+
+                });
                 console.log('EVENTBUS INITIALIZED in DRAWPLACE.VUE')
             },
             draw_updated_canvas() {
-                console.log('DRAW_UPDATED_CANVAS: ', this.$store.getters.getDrawplaceStack.length)
-                this.draw(null, true, this.$store.getters.getDrawplaceStack)
+                let dp = this.$store.getters.getDrawplace;
+                console.log('DRAW_UPDATED_CANVAS: ', dp);
+                for (let i = 0; i < dp.paths.length; i++) {
+                    this.drawMethod = 'draw';
+                    this.draw(null, true, dp.paths[i])
+                }
+                // eslint-disable-next-line no-unused-vars
+                console.log('SHAPES: ', dp.shapes);
+                for (let i = 0; i < dp.shapes.length; i++) {
+                    this.drawMethod = 'draw';
+                    this.draw_rectangle(null, true, dp.shapes[i])
+                }
+                this.drawMethod = 'draw'
             },
             connect_to_sharedb() {
                 console.log('CONNECT_TO_SHAREDB from DRAWPLACE.VUE -> ID = ', this.drawplaceName);
@@ -195,7 +305,8 @@
                     console.log(this.doc)
                     console.log(this.doc.version)
                     if (this.doc.version === 0) {
-                        var data = {drawplaceName: this.drawplaceName, canvas: this.$store.getters.getDrawplaceStack};
+                        let dp = this.$store.getters.getDrawplace;
+                        var data = {drawplaceName: this.drawplaceName, paths: dp.paths, shapes: dp.shapes};
                         this.doc.create(data)
                     } else {
                         update()
