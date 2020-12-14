@@ -159,11 +159,18 @@
             },
             add_eventlisteners() {
                 this.canvas.addEventListener('mousemove', this.draw);
+                this.canvas.addEventListener('touchmove', this.draw);
                 this.canvas.addEventListener('mousedown', this.find_mouse_pos);
                 this.canvas.addEventListener('mouseenter', this.find_mouse_pos);
                 this.canvas.addEventListener('mouseup', () => {
                     this.submit_to_sharedb()
-                })
+                });
+                this.canvas.addEventListener('touchend', () => {
+                    this.submit_to_sharedb()
+                });
+                this.canvas.addEventListener('touchcancel', () => {
+                    this.submit_to_sharedb()
+                });
                 console.log('EVENTLISTENERS ADDED in DRAWPLACE.VUE')
             },
             start_listening_eventbus() {

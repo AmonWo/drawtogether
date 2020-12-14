@@ -6,18 +6,17 @@
                 height="72"
                 color="transparent"
                 absolute
-                z-index="0"
+                class="invisible"
         >
-            <v-spacer></v-spacer>
+            <v-spacer/>
             <v-responsive max-width="120" class="px-2">
                 <v-btn
                         height="40"
                         width="110"
-                        class="black--text font-weight-bold"
+                        class="black--text font-weight-bold visible"
                         color="lightgray"
                         block
                         @click="save_drawplace"
-                        style="z-index: 999"
                 >Speichern
                 </v-btn>
             </v-responsive>
@@ -25,7 +24,7 @@
                 <v-btn
                         height="40"
                         width="110"
-                        class="black--text font-weight-bold"
+                        class="black--text font-weight-bold visible"
                         color="yellow"
                         block
                         @click="this.get_share_link"
@@ -33,55 +32,36 @@
                 </v-btn>
             </v-responsive>
             <v-responsive max-width="30" class="px-2">
-                <v-icon class="hand-cursor">$DownloadIcon</v-icon>
+                <v-icon class="hand-cursor visible">$DownloadIcon</v-icon>
             </v-responsive>
         </v-app-bar>
-
-        <v-navigation-drawer
-                v-model="drawer"
-                width="90"
-                absolute
-                floating
-                color="transparent"
-        >
-            <v-container fluid fill-height>
-                <v-col class="toolbar d-flex justify-space-between flex-column">
-                    <div
-                            class="tool-container hand-cursor"
-                            style="height:42px; width: 42px; border-radius: 50%; display: flex; justify-content: center"
-                            v-for="(tool, index) of this.tools"
-                            :key="tool"
-                            @click="pick_tool(index, $event)"
-                    >
+        <v-container fluid fill-height class="toolbar-container invisible">
+            <v-col class="toolbar d-flex justify-space-between flex-column visible">
+                <v-row
+                        v-for="(tool, index) of this.tools"
+                        :key="tool"
+                        @click="pick_tool(index, $event)"
+                        style="border: 1px solid red"
+                        :class="tool"
+                >
+                    <div class="tool-container hand-cursor visible">
                         <v-icon
                                 color="black"
                         >mdi-{{ tool }}
                         </v-icon>
                     </div>
-                </v-col>
-            </v-container>
-        </v-navigation-drawer>
-
-        <!-- <v-navigation-drawer
-             app
-             clipped
-             right
-         >
-           <v-list>
-             <v-list-item
-                 v-for="drawplace of this.draw_place_stack"
-                 :key="drawplace.title"
-                 link
-                 class="drawplace"
-                 @click="load_drawplace(drawplace)"
-             >
-               <v-list-item-content>
-                 <v-list-item-title>{{ drawplace.title }}</v-list-item-title>
-               </v-list-item-content>
-             </v-list-item>
-           </v-list>
-         </v-navigation-drawer>-->
-
+                    <div class="tool-container more-tools" v-if="tool === 'shape-outline'">
+                        <v-icon color="black">mdi-rectangle-outline</v-icon>
+                    </div>
+                    <div class="tool-container more-tools" v-if="tool === 'shape-outline'">
+                        <v-icon color="black">mdi-circle-outline</v-icon>
+                    </div>
+                    <div class="tool-container more-tools" v-if="tool === 'shape-outline'">
+                        <v-icon color="black">mdi-triangle-outline</v-icon>
+                    </div>
+                </v-row>
+            </v-col>
+        </v-container>
         <v-main>
             <router-view
                     :brushColor="brushColor"
@@ -135,12 +115,11 @@
             </v-dialog>
         </v-main>
         <v-footer
-                color="transparent"
                 height="60"
                 width="100%"
                 inset
                 absolute
-                class="footer"
+                class="footer invisible"
         >
             <transition name="fade">
                 <v-color-picker
@@ -149,9 +128,10 @@
                         dot-size="25"
                         swatches-max-height="200"
                         v-model="brushColor"
+                        class="visible"
                 />
             </transition>
-            <div class="colorbar mx-auto d-flex flex-row flex-nowrap justify-space-between align-center px-6">
+            <div class="colorbar mx-auto d-flex flex-row flex-nowrap justify-space-between align-center px-6 visible">
                 <v-avatar
                         id="color-picker-button"
                         class="basic-color-picker hand-cursor"
@@ -174,6 +154,7 @@
                         class="basic-color-picker hand-cursor"
                         :key="size"
                         size="20"
+                        @click="set_brushsize(size)"
                 >
                     <v-icon>${{size}}</v-icon>
                 </v-avatar>
@@ -209,15 +190,34 @@
             }
         },
         methods: {
+
+            set_color_history(color) {
+                if (!this.colors.includes(color)) {
+                    this.colors.shift();
+                    this.colors.push(color)
+                }
+            },
+            set_brushsize(size) {
+                switch (size) {
+                    case 'BrushSizeSmall':
+                        this.brushSize = 5;
+                        break;
+                    case 'BrushSizeMedium':
+                        this.brushSize = 10;
+                        break;
+                    case 'BrushSizeLarge':
+                        this.brushSize = 15;
+                        break;
+                    default:
+                        this.brushSize = 10;
+                }
+            },
             get_share_link() {
                 this.share = !this.share;
                 this.shareLink = 'https://dev.amonwondra.de/?drawplace=' + this.drawplaceName
             },
             save_drawplace() {
                 EventBus.$emit('show_dialog')
-            },
-            load_drawplace(drawplace) {
-                EventBus.$emit('load_drawplace', drawplace)
             },
             show_colorpicker() {
                 this.showColorPicker = !this.showColorPicker
@@ -233,19 +233,15 @@
                 let cp = document.getElementById('color-picker');
                 let cpb = document.getElementById('color-picker-button');
                 cp.addEventListener('mouseleave', () => {
-                    this.showColorPicker = !this.showColorPicker
+                    this.showColorPicker = !this.showColorPicker;
+                    this.set_color_history(this.brushColor)
                 });
                 cpb.addEventListener('mouseenter', () => {
                     this.showColorPicker = !this.showColorPicker
                 });
             },
             start_listening_eventbus() {
-                EventBus.$on('new_color', (color) => {
-                    let red = color[0];
-                    let green = color[1];
-                    let blue = color[2];
-                    this.brushColor = 'rgb(' + red + ', ' + green + ', ' + blue + ')'
-                });
+                // LEL
             },
             connect_to_sharedb() {
                 this.newUser = false;
@@ -270,19 +266,53 @@
 </script>
 
 <style scoped lang="scss">
+    .visible {
+        visibility: visible;
+    }
+
+    .invisible {
+        visibility: hidden;
+    }
 
     .hand-cursor {
-      cursor: pointer;
+        cursor: pointer;
     }
 
-    .toolbar {
-        height: 320px;
-        width: 60px;
-        background-color: white;
-        border-radius: 6px;
-        box-shadow: -24px 0px 156px rgba(0, 0, 0, 0.259562);
+    .toolbar-container {
+        position: absolute;
+        width: 90px;
 
+        .toolbar {
+            z-index: 3;
+            height: 320px;
+            width: 60px;
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: -24px 0px 156px rgba(0, 0, 0, 0.259562);
+
+            .tool-container {
+                height: 42px;
+                width: 42px;
+                border-radius: 50%;
+                display: flex;
+                justify-content: center;
+                border: 1px solid black;
+            }
+
+            .more-tools {
+                position: absolute;
+                transform: translateX(45px);
+            }
+
+            .shape-outline {
+                width: fit-content;
+                flex-wrap: nowrap;
+                overflow: hidden;
+                //flex-direction: row;
+            }
+        }
     }
+
 
     .footer {
         left: auto !important;
