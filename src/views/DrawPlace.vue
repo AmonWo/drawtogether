@@ -69,15 +69,7 @@
                 mouse_moves: [],
                 shapes: [],
                 drawMethod: 'draw',
-                rect: {
-                    startX: 0,
-                    startY: 0,
-                    w: 0,
-                    h: 0,
-                    drag: false,
-                    type: 'rect',
-                    color: 'black',
-                },
+                shape: null,
                 mouseEvent: null
             }
         },
@@ -93,26 +85,32 @@
                 console.log('CREATED CANVAS from DRAWPLACE.VUE')
             },
             save_drawplace() {
-                /*                const data = this.canvas.toDataURL('image/png');
-                                this.$store.commit('save_drawplace', {
-                                    title: this.title,
-                                    canvas: data,
-                                });
-                                this.show_dialog();
-                                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)*/
+                //
             },
             submit_to_sharedb() {
-                let payload = {
-                    drawplaceName: this.drawplaceName,
-                    paths: this.mouse_moves,
-                    shapes: this.shapes,
-                    connection: connection,
-                    doc: this.doc
-                };
+                let payload;
+                if (this.shapes.length > 0) {
+                    payload = {
+                        drawplaceName: this.drawplaceName,
+                        paths: this.mouse_moves,
+                        shapes: this.shapes,
+                        connection: connection,
+                        doc: this.doc
+                    }
+                } else {
+                    payload = {
+                        drawplaceName: this.drawplaceName,
+                        paths: this.mouse_moves,
+                        shapes: null,
+                        connection: connection,
+                        doc: this.doc
+                    }
+                }
+
                 this.$store.dispatch('submit_to_sharedb', payload);
                 this.mouse_moves = [];
                 this.shapes = [];
-                this.rect = {startX: 0, startY: 0, w: 0, h: 0}
+                this.shape = null
             },
             show_dialog() {
                 this.dialog = !this.dialog
@@ -182,47 +180,124 @@
                     case 'rectangle':
                         this.draw_rectangle(e, redraw, newData);
                         break;
+                    case 'triangle':
+                        this.draw_triangle(e, redraw, newData);
+                        break;
+                    case 'circle':
+                        this.draw_circle(e, redraw, newData);
+                        break;
                 }
             },
             draw_rectangle(e, redraw, newData) {
                 if (!redraw) {
                     if (e.buttons === 1) {
                         this.ctx.globalCompositeOperation = 'source-over';
-                        if (this.rect.startX === 0 && this.rect.startY === 0) {
-                            this.rect.startX = this.mouse_pos.x;
-                            this.rect.startY = this.mouse_pos.y;
-                            this.rect.drag = true;
+                        if (this.shape.startX === 0 && this.shape.startY === 0) {
+                            this.shape.startX = this.mouse_pos.x;
+                            this.shape.startY = this.mouse_pos.y;
+                            this.shape.drag = true;
                         }
                         this.find_mouse_pos(e);
                         //console.log(this.rect.startX, this.rect.startY, this.mouse_pos.x, this.mouse_pos.y);
-                        this.rect.w = this.mouse_pos.x - this.rect.startX;
-                        this.rect.h = this.mouse_pos.y - this.rect.startY;
-                        this.rect.color = this.brushColor;
-                        this.ctx.strokeStyle = this.rect.color;
-                        this.ctx.fillStyle = this.rect.color;
-                        this.ctx.rect(this.rect.startX, this.rect.startY, this.rect.w, this.rect.h);
+                        this.shape.w = this.mouse_pos.x - this.shape.startX;
+                        this.shape.h = this.mouse_pos.y - this.shape.startY;
+                        this.shape.color = this.brushColor;
+                        this.ctx.strokeStyle = this.shape.color;
+                        this.ctx.fillStyle = this.shape.color;
+                        //this.ctx.rect(this.shape.startX, this.shape.startY, this.shape.w, this.shape.h);
                     }
                 } else {
                     if (newData !== null) {
                         this.ctx.globalCompositeOperation = 'source-over';
                         for (let i = 0; i < newData.length; i++) {
                             //console.log('NEWDATA', newData[i]);
-                            this.ctx.beginPath();
-                            this.ctx.strokeStyle = newData[i].color;
-                            this.ctx.fillStyle = newData[i].color;
-                            this.ctx.rect(newData[i].startX, newData[i].startY, newData[i].w, newData[i].h);
-                            this.ctx.stroke();
-                            this.ctx.fill()
+                            if(newData[i].type === 'rect'){
+                                this.ctx.beginPath();
+                                this.ctx.strokeStyle = newData[i].color;
+                                this.ctx.fillStyle = newData[i].color;
+                                this.ctx.rect(newData[i].startX, newData[i].startY, newData[i].w, newData[i].h);
+                                this.ctx.stroke();
+                                this.ctx.fill()
+                            }
                         }
                     }
-
                 }
 
             },
-            draw_circle() {
-
+            draw_circle(e, redraw, newData) {
+                if (!redraw) {
+                    if (e.buttons === 1) {
+                        this.ctx.globalCompositeOperation = 'source-over';
+                        if (this.shape.startX === 0 && this.shape.startY === 0) {
+                            this.shape.startX = this.mouse_pos.x;
+                            this.shape.startY = this.mouse_pos.y;
+                            this.shape.drag = true;
+                        }
+                        this.find_mouse_pos(e);
+                        //console.log(this.rect.startX, this.rect.startY, this.mouse_pos.x, this.mouse_pos.y);
+                        this.shape.w = this.mouse_pos.x - this.shape.startX;
+                        this.shape.h = this.mouse_pos.y - this.shape.startY;
+                        this.shape.color = this.brushColor;
+                        this.ctx.strokeStyle = this.shape.color;
+                        this.ctx.fillStyle = this.shape.color;
+                        //this.ctx.arc(this.shape.startX, this.shape.startY, this.shape.startX + this.shape.width, 0, 2 * Math.PI);
+                    }
+                } else {
+                    if (newData !== null) {
+                        this.ctx.globalCompositeOperation = 'source-over';
+                        for (let i = 0; i < newData.length; i++) {
+                            //console.log('NEWDATA', newData[i]);
+                            if(newData[i].type === 'circle'){
+                                this.ctx.beginPath();
+                                this.ctx.strokeStyle = newData[i].color;
+                                this.ctx.fillStyle = newData[i].color;
+                                this.ctx.arc(newData[i].startX, newData[i].startY, (newData[i].w), 0, 2 * Math.PI);
+                                this.ctx.stroke();
+                                this.ctx.fill()
+                            }
+                        }
+                    }
+                }
             },
-            draw_triangle() {
+            draw_triangle(e, redraw, newData) {
+                if (!redraw) {
+                    if (e.buttons === 1) {
+                        this.ctx.beginPath();
+                        this.ctx.globalCompositeOperation = 'source-over';
+                        if (this.shape.startX === 0 && this.shape.startY === 0) {
+                            this.shape.startX = this.mouse_pos.x;
+                            this.shape.startY = this.mouse_pos.y;
+                            this.shape.drag = true;
+                        }
+                        this.find_mouse_pos(e);
+                        //console.log(this.rect.startX, this.rect.startY, this.mouse_pos.x, this.mouse_pos.y);
+                        this.shape.w = this.mouse_pos.x;
+                        this.shape.h = this.mouse_pos.y;
+                        this.shape.color = this.brushColor;
+                        this.ctx.strokeStyle = this.shape.color;
+                        this.ctx.fillStyle = this.shape.color;
+                        this.ctx.stroke();
+                        this.ctx.fill();
+                        this.ctx.closePath();
+                    }
+                } else {
+                    if (newData !== null) {
+                        this.ctx.globalCompositeOperation = 'source-over';
+                        for (let i = 0; i < newData.length; i++) {
+                            if(newData[i].type === 'triangle') {
+                                this.ctx.beginPath();
+                                this.ctx.strokeStyle = newData[i].color;
+                                this.ctx.fillStyle = newData[i].color;
+                                this.ctx.moveTo(newData[i].startX + (newData[i].w - newData[i].startX) / 2, newData[i].startY);
+                                this.ctx.lineTo(newData[i].startX, newData[i].h);
+                                this.ctx.lineTo(newData[i].w, newData[i].h);
+                                this.ctx.lineTo(newData[i].startX + (newData[i].w - newData[i].startX) / 2, newData[i].startY);
+                                this.ctx.stroke();
+                                this.ctx.fill()
+                            }
+                        }
+                    }
+                }
 
             },
             find_mouse_pos(e) {
@@ -239,9 +314,9 @@
                 this.canvas.addEventListener('mouseenter', this.find_mouse_pos);
                 this.canvas.addEventListener('mouseup', this.find_mouse_pos);
                 this.canvas.addEventListener('mouseup', () => {
-                    if (this.rect.startX !== 0 && this.rect.startY !== 0)
-                        this.ctx.stroke();
-                        this.shapes.push(this.rect);
+                    if (this.shape !== null) {
+                        this.shapes.push(this.shape);
+                    }
                     this.submit_to_sharedb()
                 });
                 this.canvas.addEventListener('touchend', () => {
@@ -251,14 +326,40 @@
                     this.submit_to_sharedb()
                 });
                 this.canvas.addEventListener('dblclick', (e) => {
-                    this.find_mouse_pos(e);
                     let shapes = this.$store.getters.getDrawplace.shapes;
-                    for (let i = 0; i < shapes; i++) {
-                        if (this.mouse_pos.x >= shapes.startX && this.mouse_pos.x <= shapes.w){
-                            if(this.mouse_pos.y >= shapes.startY && this.mouse_pos.y <= shapes.h){
-                                console.log('RECT CLICKED')
+                    let index = 0;
+                    for (let shape of shapes) {
+                        this.find_mouse_pos(e);
+                        if (shape[0].type === 'rect') {
+                            if (this.mouse_pos.x >= shape[0].startX && this.mouse_pos.x <= shape[0].startX + shape[0].w && this.mouse_pos.y >= shape[0].startY && this.mouse_pos.y <= shape[0].startY + shape[0].h) {
+                                this.$store.dispatch('delete_from_sharedb', {
+                                    connection: connection,
+                                    drawplaceName: this.drawplaceName,
+                                    doc: this.doc,
+                                    index: index
+                                })
+                            }
+                        } else if (shape[0].type === 'triangle') {
+                            if (this.mouse_pos.x >= shape[0].startX && this.mouse_pos.x <= shape[0].startX + shape[0].w && this.mouse_pos.y >= shape[0].startY && this.mouse_pos.y <= shape[0].startY + shape[0].h) {
+                                this.$store.dispatch('delete_from_sharedb', {
+                                    connection: connection,
+                                    drawplaceName: this.drawplaceName,
+                                    doc: this.doc,
+                                    index: index
+                                })
+                            }
+                        } else if (shape[0].type === 'circle') {
+                            if(((this.mouse_pos.x - shape[0].startX) ** 2 + (this.mouse_pos.y - shape[0].startY) ** 2) < shape[0].w){
+                                this.$store.dispatch('delete_from_sharedb', {
+                                    connection: connection,
+                                    drawplaceName: this.drawplaceName,
+                                    doc: this.doc,
+                                    index: index
+                                })
                             }
                         }
+
+                        index++;
                     }
                 });
                 console.log('EVENTLISTENERS ADDED in DRAWPLACE.VUE')
@@ -271,17 +372,45 @@
                     this.connect_to_sharedb()
                 });
                 EventBus.$on('draw_rectangle', () => {
+                    this.shape = {
+                        startX: 0,
+                        startY: 0,
+                        w: 0,
+                        h: 0,
+                        drag: false,
+                        type: 'rect',
+                        color: 'black',
+                    };
                     this.drawMethod = 'rectangle'
                 });
                 EventBus.$on('draw_circle', () => {
-
+                    this.shape = {
+                        startX: 0,
+                        startY: 0,
+                        w: 0,
+                        h: 0,
+                        drag: false,
+                        type: 'circle',
+                        color: 'black',
+                    };
+                    this.drawMethod = 'circle'
                 });
                 EventBus.$on('draw_triangle', () => {
-
+                    this.shape = {
+                        startX: 0,
+                        startY: 0,
+                        w: 0,
+                        h: 0,
+                        drag: false,
+                        type: 'triangle',
+                        color: 'black',
+                    };
+                    this.drawMethod = 'triangle'
                 });
                 console.log('EVENTBUS INITIALIZED in DRAWPLACE.VUE')
             },
             draw_updated_canvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 let dp = this.$store.getters.getDrawplace;
                 console.log('DRAW_UPDATED_CANVAS: ', dp);
                 for (let i = 0; i < dp.paths.length; i++) {
@@ -292,7 +421,9 @@
                 console.log('SHAPES: ', dp.shapes);
                 for (let i = 0; i < dp.shapes.length; i++) {
                     this.drawMethod = 'draw';
-                    this.draw_rectangle(null, true, dp.shapes[i])
+                    this.draw_rectangle(null, true, dp.shapes[i]);
+                    this.draw_triangle(null, true, dp.shapes[i]);
+                    this.draw_circle(null, true, dp.shapes[i]);
                 }
                 this.drawMethod = 'draw'
             },
