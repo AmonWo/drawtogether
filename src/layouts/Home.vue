@@ -9,15 +9,17 @@
                 class="invisible"
         >
             <v-spacer/>
-            <v-responsive max-width="120" class="px-2">
+            <v-responsive max-width="130" class="px-2">
                 <v-btn
                         height="40"
-                        width="110"
+                        width="120"
                         class="black--text font-weight-bold visible"
                         color="lightgray"
                         block
-                        @click="save_drawplace"
-                >Speichern
+                        @click="this.export_drawplace"
+                >
+                    Speichern
+                    <v-icon class="hand-cursor visible" style="transform: scale(0.7)">$DownloadIcon</v-icon>
                 </v-btn>
             </v-responsive>
             <v-responsive max-width="120" class="px-2">
@@ -31,9 +33,9 @@
                 >Draw teilen
                 </v-btn>
             </v-responsive>
-            <v-responsive max-width="30" class="px-2">
+<!--            <v-responsive max-width="30" class="px-2">
                 <v-icon class="hand-cursor visible">$DownloadIcon</v-icon>
-            </v-responsive>
+            </v-responsive>-->
         </v-app-bar>
         <v-container fluid fill-height class="toolbar-container invisible">
             <v-col class="toolbar d-flex justify-space-between flex-column visible">
@@ -244,6 +246,9 @@
             show_more_shapes() {
                 console.log('EVENTBUS: SHOW_MORE_SHAPES');
                 EventBus.$emit('show_more_shapes')
+            },
+            export_drawplace() {
+                EventBus.$emit('export_drawplace')
             }
         },
         beforeMount() {

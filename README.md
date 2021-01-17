@@ -1,6 +1,6 @@
 # drawtogether
 
-## Working Demo (Beta)
+# Live Demo (Beta)
 https://dev.amonwondra.de
 
 ## Project setup
@@ -23,8 +23,16 @@ yarn build
 yarn lint
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### Running a local demo
+```
+yarn install
+yarn serve
+```
+#### Running local sharedb
+```
+Run following file:
+ShareDBServer/main.js
+```
 
 ### MongoDB
 

@@ -51,27 +51,3 @@ function startServer() {
       console.log(e)
     }
 }
-
-/*// Create initial document then fire callback
-function createDoc(callback) {
-  console.log('createDoc called');
-  var connection = backend.connect();
-  connection.createFetchQuery('drawings', {}, {}, function(err, results) {
-    if (err) { throw err; }
-
-    if (results.length === 0) {
-      var doc = connection.get('drawings', 'drawplaceName');
-      var data = {drawplaceName: '', canvas: []};
-      doc.create(data);
-      console.log('CREATED NEW DOC: ', doc.data)
-    } else {
-      console.log('DOC EXISTS -> RETURN DRAWINGS[0]');
-      console.log(connection.get('drawings', '0'))
-    }
-    callback();
-  });
-}
-
-function createNewDoc() {
-
-}*/
