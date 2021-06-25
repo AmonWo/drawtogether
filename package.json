@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@teamwork/websocket-json-stream": "^2.0.0",
-    "axios": "^0.20.0",
+    "axios": ">=0.21.1",
     "babel-plugin-transform-remove-console": "^6.9.4",
     "connect": "^3.7.0",
     "core-js": "^3.6.5",
