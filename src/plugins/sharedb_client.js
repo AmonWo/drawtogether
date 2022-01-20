@@ -4,9 +4,9 @@ try {
     // Expose a singleton WebSocket connection to ShareDB server
     var socket;
     if (process.env.NODE_ENV === 'production'){
-        socket = new WebSocket('wss://' + 'dev.amonwondra.de:8001/api');
+        socket = new WebSocket('wss://' + 'api.amonwondra.de');
     } else {
-        socket = new WebSocket('ws://' + '127.0.0.1:8000/api');
+        socket = new WebSocket('ws://' + '127.0.0.1');
     }
     var connection = new sharedb.Connection(socket);
 } catch (e) {
