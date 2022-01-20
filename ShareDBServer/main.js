@@ -8,8 +8,6 @@ var WebSocketJSONStream = require('@teamwork/websocket-json-stream');
 
 var backend = new ShareDB();
 startServer();
-//createDoc(startServer);
-
 function startServer() {
     try {
         // Create a web server to serve files and listen to WebSocket connections
