@@ -4,7 +4,6 @@ jobs:
   web-deploy:
     name: 🎉 Deploy
     runs-on: ubuntu-latest
-    environment: checkdomain
     steps:
       - name: 🚚 Get latest code
         uses: actions/checkout@v2
@@ -17,7 +16,6 @@ jobs:
       - name: ✈ Configure git credentials
         uses: fusion-engineering/setup-git-credentials@v2
         with:
-          environment: checkdomain
           credentials:
             ${{ secrets.FTP_PASS }}
             ${{ secrets.FTP_USER }}
@@ -27,15 +25,16 @@ jobs:
         run: |
           npm install
           npm run build
+
       - name: 📂 Sync files
         uses: SamKirkland/FTP-Deploy-Action@4.2.0
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
-          server-dir: '/httpdocs/'
+          server-dir: '/httpdoc/'
           local-dir:
-              './dist/'
-              './ShareDBServer'
+            './dist/'
+            './ShareDBServer/'
           dangerous-clean-slate: true
           delete: true
