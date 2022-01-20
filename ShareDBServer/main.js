@@ -37,8 +37,6 @@ function startServer() {
         } else {
             hostname = '127.0.0.1';
         }
-        //let hostname = '127.0.0.1';
-        //let hostname = 'localhost';
         let port = process.env.PORT || 8000;
         app.set('port', port);
 
