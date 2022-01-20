@@ -17,6 +17,7 @@ jobs:
       - name: ✈ Configure git credentials
         uses: fusion-engineering/setup-git-credentials@v2
         with:
+          environment: checkdomain
           credentials:
             ${{ secrets.FTP_PASS }}
             ${{ secrets.FTP_USER }}
