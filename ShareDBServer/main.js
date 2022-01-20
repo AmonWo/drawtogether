@@ -35,7 +35,7 @@ function startServer() {
 
         var hostname;
         if (process.env.NODE_ENV === 'production'){
-            hostname = 'dev.amonwondra.de';
+            hostname = 'api.amonwondra.de';
         } else {
             hostname = '127.0.0.1';
         }
