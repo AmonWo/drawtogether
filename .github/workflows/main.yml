@@ -19,9 +19,9 @@ jobs:
         with:
           environment: checkdomain
           credentials:
-            ${{ environment.FTP_PASS }}
-            ${{ environment.FTP_USER }}
-            ${{ environment.FTP_HOST }}
+            ${{ secrets.FTP_PASS }}
+            ${{ secrets.FTP_USER }}
+            ${{ secrets.FTP_HOST }}
 
       - name: 🔨 Build Project
         run: |
@@ -30,12 +30,12 @@ jobs:
       - name: 📂 Sync files
         uses: SamKirkland/FTP-Deploy-Action@4.2.0
         with:
-          server: ${{ environment.FTP_HOST }}
-          username: ${{ environment.FTP_USER }}
-          password: ${{ environment.FTP_PASS }}
+          server: ${{ FTP_HOST }}
+          username: ${{ FTP_USER }}
+          password: ${{ FTP_PASS }}
           server-dir: '/httpdocs/'
           local-dir:
-            './dist/'
-            './ShareDBServer'
+              './dist/'
+              './ShareDBServer'
           dangerous-clean-slate: true
           delete: true
